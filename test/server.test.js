@@ -49,6 +49,14 @@ tap.test('POST /users/login with wrong password', async (t) => {
     t.end();
 });
 
+tap.test('POST /users/login with missing email', async (t) => {
+    const response = await server.post('/users/login').send({
+        password: mockUser.password
+    });
+    t.equal(response.status, 400);
+    t.end();
+});
+
 // Preferences tests
 
 tap.test('GET /users/preferences', async (t) => {
@@ -79,6 +87,22 @@ tap.test('Check PUT /users/preferences', async (t) => {
     t.end();
 });
 
+tap.test('PUT /users/preferences without preferences', async (t) => {
+    const response = await server.put('/users/preferences').set('Authorization', `Bearer ${token}`);
+    t.equal(response.status, 400);
+    t.end();
+});
+
+tap.test('PUT /users/preferences with wrong preferences object', async (t) => {
+    const response = await server.put('/users/preferences').set('Authorization', `Bearer ${token}`).send({
+        preferences: {
+            wrong: 'wrong'
+        }
+    });
+    t.equal(response.status, 400);
+    t.end();
+});
+
 // News tests
 
 tap.test('GET /news', async (t) => {
@@ -93,6 +117,27 @@ tap.test('GET /news without token', async (t) => {
     t.equal(response.status, 401);
     t.end();
 });
+
+tap.test('GET /news with wrong token', async (t) => {
+    const response = await server.get('/news').set('Authorization', `Bearer wrongtoken`);
+    t.equal(response.status, 401);
+    t.end();
+});
+
+
+tap.test('GET /news with wrong preferences', async (t) => {
+    const response = await server.get('/news').set('Authorization', `Bearer ${token}`).query({ preferences: 'wrong' });
+    t.equal(response.status, 400);
+    t.end();
+});
+
+tap.test('GET /news with preferences', async (t) => {
+    const response = await server.get('/news').set('Authorization', `Bearer ${token}`).query({ preferences: 'movies' });
+    t.equal(response.status, 200);
+    t.hasOwnProp(response.body, 'news');
+    t.end();
+});
+
 
 
 
