@@ -1,0 +1,56 @@
+All APIs used are listed as 
+
+
+
+
+GET /preferences  (for getting preferences)
+
+POST /preferences (for setting preferences) (we can set query, lang, country, max in DB)
+
+
+POST /preferences
+
+
+
+GET /news
+Note we need to send token for testing scenarios in Header like we are extracting authorization from Header , for all APIs(excepot for login and register) as we use auth.js as middleware for the configurartion 
+For login Scenarios 
+
+POST /register
+Needs {name:"xxx" email:"xxx@gmail.com" and password:"xxx"} in body
+
+
+POST /login with body of type -  {"email":"abc@abc.com","password":"newfd"}
+
+Main Schema for our User is 
+const mongoose = require('mongoose');
+const userSchema = new mongoose.Schema({
+    name: {
+        type: "String",
+        required: true,
+        trim: true
+    },
+    email: {
+        type: "String",
+        required: true,
+        trim: true,
+        unique: true
+    },
+    password: {
+        type: "String",
+        required: true,
+    },
+    role: {
+        type: "String",
+        required: true,
+        default: "user"
+    },
+    preference: {
+        query: { type: String, default: "top news" },
+        lang: { type: String, default: "en" },
+        country: { type: String, default: "in" },
+        max: { type: Number, default: 100 }
+    }
+})
+
+module.exports = mongoose.model('User', userSchema);
