@@ -1,0 +1,10 @@
+export const GNEWS_BASE_URL = 'https://gnews.io/api/v4';
+export const GNEWS_TIMEOUT_MS = 8000;
+export const DEFAULT_LANGUAGE = 'en';
+export const DEFAULT_LIMIT = 10;
+export const MAX_LIMIT = 10;
+export const LANGUAGE_PATTERN = /^[a-z]{2}$/;
+export const NEWS_QUERY_FIELDS = ['language', 'limit'];
+export const ARTICLE_ID_PATTERN = /^[a-f0-9]{16}$/;
+export const KEYWORD_MAX = 100;
+export const ARTICLE_REGISTRY_MAX = 1000;
