@@ -3,6 +3,10 @@ const supertest = require('supertest');
 const app = require('../app');
 const server = supertest(app);
 
+tap.before(async () => {
+    await app.initPromise;
+});
+
 const mockUser = {
     name: 'Clark Kent',
     email: 'clark@superman.com',
