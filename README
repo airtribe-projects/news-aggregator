@@ -1,0 +1,65 @@
+# News Aggregator API
+
+A RESTful API built with Node.js, Express, and MongoDB that supports user authentication, personalized news preferences, and news retrieval.
+
+## Features
+
+- User signup and login with bcrypt password hashing.
+- JWT-based authentication.
+- Get and update user preferences.
+- Fetch news using NewsAPI.
+- MongoDB integration with Mongoose.
+
+## Tech Stack
+
+Node.js, Express.js, MongoDB, Mongoose, JWT, bcrypt, NewsAPI.
+
+## Installation
+
+```bash
+git clone https://github.com/rajivk5/news-aggregator.git
+cd news-aggregator
+npm install
+```
+
+Create a `.env` file in the project root:
+
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+NEWS_API_KEY=your_news_api_key
+```
+
+## Run the Project
+
+```bash
+npm start
+```
+
+The server runs on `http://localhost:3000`.
+
+## API Endpoints
+
+| Method | Endpoint             | Description               |
+| ------ | -------------------- | ------------------------- |
+| POST   | `/users/signup`      | Register a user           |
+| POST   | `/users/login`       | Log in and receive a JWT  |
+| GET    | `/users/preferences` | Get user preferences      |
+| PUT    | `/users/preferences` | Update user preferences   |
+| GET    | `/news`              | Fetch news (JWT required) |
+
+For protected endpoints, send the token in the header:
+
+```text
+Authorization: Bearer <your_jwt_token>
+```
+
+## Run Tests
+
+```bash
+npm run test
+```
+
+## Security
+
+Never commit your `.env` file or expose API keys, database credentials, or JWT secrets.
