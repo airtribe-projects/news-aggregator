@@ -2,19 +2,57 @@ const users = require("../models/userStore");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// Validate email format
+const isValidEmail = (email) => {
+  return (
+    typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  );
+};
+
+// Validate preferences
+const isValidPreferences = (preferences) => {
+  return (
+    preferences === undefined ||
+    (Array.isArray(preferences) &&
+      preferences.every(
+        (item) => typeof item === "string" && item.trim().length > 0,
+      ))
+  );
+};
+
+// Normalize email consistently
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
+// Register a new user
 const signup = async (req, res) => {
   try {
-    const { name, email, password, preferences } = req.body;
+    const { name, email, password, preferences } = req.body ?? {};
 
-    // 1. Validate required fields
-    if (!name || !email || !password) {
+    // Validate input
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      !isValidEmail(email) ||
+      typeof password !== "string" ||
+      password.length < 8
+    ) {
       return res.status(400).json({
-        message: "Name, email, and password are required",
+        message:
+          "Name, valid email, and password of at least 8 characters are required",
       });
     }
 
-    // 2. Check if the email already exists
-    const existingUser = users.find((user) => user.email === email);
+    // Validate preferences if supplied
+    if (!isValidPreferences(preferences)) {
+      return res.status(400).json({
+        message: "Preferences must be an array of non-empty strings",
+      });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    // Check for existing email
+    const existingUser = users.find((user) => user.email === normalizedEmail);
 
     if (existingUser) {
       return res.status(409).json({
@@ -22,21 +60,20 @@ const signup = async (req, res) => {
       });
     }
 
-    // 3. Hash the password
+    // Hash password before storing it
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Create the user
     const newUser = {
       id: users.length + 1,
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
-      preferences: Array.isArray(preferences) ? preferences : [],
+      preferences: (preferences ?? []).map((item) => item.trim()),
     };
 
     users.push(newUser);
 
-    // 5. Return a response without the password
+    // Never return the password or password hash
     return res.status(200).json({
       message: "User registered successfully",
       user: {
@@ -52,17 +89,25 @@ const signup = async (req, res) => {
     });
   }
 };
+
+// Log in an existing user
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
 
-    if (!email || !password) {
+    if (
+      !isValidEmail(email) ||
+      typeof password !== "string" ||
+      password.length === 0
+    ) {
       return res.status(400).json({
-        message: "Email and password are required",
+        message: "A valid email and password are required",
       });
     }
 
-    const user = users.find((user) => user.email === email);
+    const normalizedEmail = normalizeEmail(email);
+
+    const user = users.find((user) => user.email === normalizedEmail);
 
     if (!user) {
       return res.status(401).json({
@@ -78,8 +123,17 @@ const login = async (req, res) => {
       });
     }
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        message: "Server authentication is not configured",
+      });
+    }
+
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,
+        email: user.email,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" },
     );
@@ -92,4 +146,53 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { signup, login };
+const getPreferences = (req, res) => {
+  const user = users.find((user) => user.id === req.user.id);
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  return res.status(200).json({
+    preferences: user.preferences,
+  });
+};
+
+const updatePreferences = (req, res) => {
+  const { preferences } = req.body ?? {};
+
+  if (
+    !Array.isArray(preferences) ||
+    !preferences.every(
+      (item) => typeof item === "string" && item.trim().length > 0,
+    )
+  ) {
+    return res.status(400).json({
+      message: "Preferences must be an array of non-empty strings",
+    });
+  }
+
+  const user = users.find((user) => user.id === req.user.id);
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  user.preferences = preferences.map((item) => item.trim());
+
+  return res.status(200).json({
+    message: "Preferences updated successfully",
+    preferences: user.preferences,
+  });
+};
+
+module.exports = {
+  signup,
+  login,
+  getPreferences,
+  updatePreferences,
+};
